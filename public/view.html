@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Presentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/night.min.css" id="theme">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown id="markdown-section">
+          <textarea data-template>
+            # Loading...
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/markdown/markdown.min.js"></script>
+    <script>
+      // Fetch content before initializing
+      fetch('/content')
+        .then(res => res.text())
+        .then(markdown => {
+          const section = document.getElementById('markdown-section');
+          // Replace the textarea content
+          section.innerHTML = `<textarea data-template>${markdown}</textarea>`;
+
+          Reveal.initialize({
+            plugins: [ RevealMarkdown ]
+          });
+        });
+    </script>
+  </body>
+</html>

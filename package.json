@@ -1,0 +1,10 @@
+{
+  "name": "hackathon-slides",
+  "version": "1.0.0",
+  "description": "Simple slide creator using Node.js native http and Reveal.js CDN",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

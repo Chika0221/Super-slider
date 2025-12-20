@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slide Editor</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="editor-pane">
+            <div class="toolbar">
+                <h2>Markdown Editor</h2>
+                <button id="saveBtn">Save & Update</button>
+            </div>
+            <textarea id="markdownInput"># Loading...</textarea>
+        </div>
+        <div class="preview-pane">
+            <iframe id="previewFrame" src="/view"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const textarea = document.getElementById('markdownInput');
+        const saveBtn = document.getElementById('saveBtn');
+        const previewFrame = document.getElementById('previewFrame');
+
+        // Load initial content
+        fetch('/content')
+            .then(res => res.text())
+            .then(text => {
+                textarea.value = text;
+            });
+
+        // Save content
+        saveBtn.addEventListener('click', () => {
+            fetch('/save', {
+                method: 'POST',
+                body: textarea.value
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Reload the iframe to show changes
+                    previewFrame.contentWindow.location.reload();
+                } else {
+                    alert('Error saving');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
