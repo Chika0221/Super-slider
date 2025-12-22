@@ -31,6 +31,59 @@ const serveStatic = (res, filepath, contentType) => {
     });
 };
 
+const generateSlides = (topic) => {
+    const safeTopic = topic || "My Project";
+    return `# ${safeTopic}
+## Hackathon Pitch
+
+---
+
+## 🚨 The Problem
+- **Context:** What is the current situation?
+- **Pain Point:** What is broken?
+- **Impact:** Why does it matter?
+
+---
+
+## 💡 The Solution: ${safeTopic}
+- **Innovation:** How we solve it.
+- **Key Features:**
+  - Feature 1
+  - Feature 2
+  - Feature 3
+
+---
+
+## 🛠 Tech Stack
+\`\`\`javascript
+const stack = {
+  frontend: "Modern Web",
+  backend: "Node.js",
+  ai: "Generative Models"
+};
+\`\`\`
+- Scalable Architecture
+- Real-time processing
+
+---
+
+## 🚀 Live Demo
+*Let's see it in action!*
+
+---
+
+## 📈 Future Roadmap
+1. **Phase 1:** MVP Polish
+2. **Phase 2:** User Beta
+3. **Phase 3:** Monetization
+
+---
+
+## Thank You!
+*Questions?*
+`;
+};
+
 const server = http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
 
@@ -42,11 +95,9 @@ const server = http.createServer((req, res) => {
     } else if (req.method === 'GET' && pathname === '/view') {
         serveStatic(res, path.join(__dirname, 'public', 'view.html'), 'text/html');
     } else if (req.method === 'GET' && (pathname.startsWith('/css/') || pathname.startsWith('/js/'))) {
-        // Serve static assets from public folder
         const safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(__dirname, 'public', safePath);
 
-        // Ensure the path is still inside the public directory
         if (!fullPath.startsWith(path.join(__dirname, 'public'))) {
              res.writeHead(403);
              res.end('Forbidden');
@@ -56,7 +107,6 @@ const server = http.createServer((req, res) => {
         const ext = path.extname(pathname);
         serveStatic(res, fullPath, getContentType(ext));
     } else if (req.method === 'GET' && pathname === '/content') {
-        // Return existing slides or default content
         if (fs.existsSync(SLIDES_FILE)) {
             fs.readFile(SLIDES_FILE, 'utf8', (err, data) => {
                 if (err) {
@@ -69,7 +119,7 @@ const server = http.createServer((req, res) => {
             });
         } else {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end('# Welcome\n\n- Point 1\n- Point 2');
+            res.end('# Welcome\n\nStart editing to create your slides!');
         }
     } else if (req.method === 'POST' && pathname === '/save') {
         let body = '';
@@ -77,7 +127,6 @@ const server = http.createServer((req, res) => {
             body += chunk.toString();
         });
         req.on('end', () => {
-            // body is the raw markdown content
             fs.writeFile(SLIDES_FILE, body, (err) => {
                 if (err) {
                     res.writeHead(500);
@@ -87,6 +136,22 @@ const server = http.createServer((req, res) => {
                     res.end('Saved');
                 }
             });
+        });
+    } else if (req.method === 'POST' && pathname === '/generate-slides') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const markdown = generateSlides(data.topic);
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end(markdown);
+            } catch (e) {
+                res.writeHead(400);
+                res.end('Invalid JSON');
+            }
         });
     } else {
         res.writeHead(404);
