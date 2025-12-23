@@ -1,71 +1,246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>HackSlide Editor</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <div class="editor-pane">
-            <div class="toolbar">
-                <div class="logo">HackSlide <span style="font-size:0.5em; color: var(--accent-secondary)">BETA</span></div>
-                <div class="controls">
-                    <button id="saveBtn">Save & Refresh</button>
-                    <button id="exportBtn" class="secondary">Export .md</button>
-                </div>
-            </div>
+  <head>
+    <meta charset="utf-8">
+    <title>HackSlide WYSIWYG</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/black.min.css" id="theme">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai.min.css">
+    <style>
+      /* Inherit styles from view.html */
+      .reveal { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+        font-family: 'Orbitron', 'Segoe UI', sans-serif;
+        text-transform: uppercase;
+        color: #00f0ff;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+      }
+      .reveal section img { border: 2px solid #00f0ff; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+      .reveal code { color: #ff00ff; }
+      .reveal pre { box-shadow: 0 0 20px rgba(0, 0, 0, 0.7); border: 1px solid #333; }
 
-            <div class="ai-controls">
-                <span style="color: var(--accent-secondary); font-weight:bold; font-family:'Orbitron', sans-serif;">AI GENERATOR</span>
-                <input type="text" id="aiTopic" class="ai-input" placeholder="Enter hackathon project name (e.g. 'EcoTrack')">
-                <button id="generateBtn" class="secondary">Generate</button>
-            </div>
+      /* Editor specific styles */
+      #editor-toolbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.9);
+        padding: 10px 20px;
+        border-bottom: 2px solid #00f0ff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-sizing: border-box;
+      }
 
-            <textarea id="markdownInput" spellcheck="false" placeholder="# Start typing your slides..."></textarea>
-        </div>
-        <div class="preview-pane">
-            <iframe id="previewFrame" src="/view"></iframe>
-        </div>
+      .logo {
+          font-family: 'Orbitron', sans-serif;
+          color: #00f0ff;
+          font-size: 1.2em;
+          font-weight: bold;
+      }
+
+      .toolbar-group {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+      }
+
+      button {
+        background: #000;
+        color: #00f0ff;
+        border: 1px solid #00f0ff;
+        padding: 5px 15px;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        font-size: 0.8em;
+      }
+      button:hover {
+        background: #00f0ff;
+        color: #000;
+      }
+      button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+      }
+
+      .ai-input {
+          background: #222;
+          border: 1px solid #444;
+          color: #fff;
+          padding: 5px;
+          border-radius: 4px;
+          font-family: 'Roboto', sans-serif;
+      }
+
+      /* Push content down so it's not hidden by toolbar */
+      .reveal {
+          margin-top: 60px;
+          height: calc(100vh - 60px) !important;
+      }
+
+      /* Editable styling */
+      [contenteditable="true"] {
+        outline: 1px dashed rgba(0, 240, 255, 0.3);
+      }
+      [contenteditable="true"]:focus {
+        outline: 2px solid #00f0ff;
+        background: rgba(0,0,0,0.5);
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="editor-toolbar">
+      <div class="logo">HackSlide <span style="font-size:0.5em; color: var(--accent-secondary)">WYSIWYG</span></div>
+
+      <div class="toolbar-group">
+          <input type="text" id="aiTopic" class="ai-input" placeholder="Topic (e.g. 'EcoTrack')">
+          <button id="generateBtn">AI Generate</button>
+      </div>
+
+      <div class="toolbar-group">
+        <button id="addSlideBtn">Add Slide</button>
+        <button id="deleteSlideBtn" style="border-color: #ff0055; color: #ff0055;">Delete Slide</button>
+        <button id="saveBtn">Save</button>
+      </div>
     </div>
 
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown id="markdown-section">
+          <textarea data-template>
+            # Loading...
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+
     <script>
-        const textarea = document.getElementById('markdownInput');
-        const saveBtn = document.getElementById('saveBtn');
-        const exportBtn = document.getElementById('exportBtn');
-        const generateBtn = document.getElementById('generateBtn');
-        const aiTopic = document.getElementById('aiTopic');
-        const previewFrame = document.getElementById('previewFrame');
+      const turndownService = new TurndownService({
+          headingStyle: 'atx',
+          codeBlockStyle: 'fenced'
+      });
 
-        // Load initial content
-        fetch('/content')
-            .then(res => res.text())
-            .then(text => {
-                textarea.value = text;
+      // Keep emphasis and strong as normal
+      // Turndown defaults are good.
+
+      // Fetch content and init Reveal
+      fetch('/content')
+        .then(res => res.text())
+        .then(markdown => {
+          const section = document.getElementById('markdown-section');
+          section.innerHTML = `<textarea data-template>${markdown}</textarea>`;
+
+          Reveal.initialize({
+            controls: true,
+            progress: true,
+            center: true,
+            hash: true,
+            keyboard: true,
+            plugins: [ RevealMarkdown, RevealHighlight ]
+          }).then(() => {
+            makeSlidesEditable();
+
+            Reveal.on('slidechanged', event => {
+                // Ensure the new slide is editable
+                makeSlidesEditable();
             });
+          });
+        });
 
-        // Save content
-        const saveContent = () => {
-            return fetch('/save', {
-                method: 'POST',
-                body: textarea.value
-            })
-            .then(res => {
-                if (res.ok) {
-                    previewFrame.contentWindow.location.reload();
-                } else {
-                    alert('Error saving');
-                }
-            });
-        };
+      function makeSlidesEditable() {
+        const sections = document.querySelectorAll('.slides section');
+        sections.forEach(section => {
+           if (section.getAttribute('contenteditable') === 'true') return;
 
-        saveBtn.addEventListener('click', saveContent);
+           section.setAttribute('contenteditable', 'true');
 
-        // AI Generate
-        generateBtn.addEventListener('click', () => {
+           section.addEventListener('keydown', (e) => {
+               e.stopPropagation(); // Stop reveal from capturing keys
+           });
+
+           section.addEventListener('keyup', (e) => {
+             e.stopPropagation();
+           });
+        });
+      }
+
+      function serializeSlides() {
+        const sections = document.querySelectorAll('.reveal .slides > section');
+        let markdownParts = [];
+
+        sections.forEach(section => {
+            let clone = section.cloneNode(true);
+
+            // Cleanup: Remove Reveal specific elements if any
+            // Remove code line numbers?
+
+            let md = turndownService.turndown(clone.innerHTML);
+            markdownParts.push(md);
+        });
+
+        return markdownParts.join('\n\n---\n\n');
+      }
+
+      const saveContent = (markdown) => {
+          return fetch('/save', {
+              method: 'POST',
+              body: markdown
+          }).then(res => {
+              if(!res.ok) alert('Error saving');
+          });
+      };
+
+      document.getElementById('saveBtn').addEventListener('click', () => {
+          const markdown = serializeSlides();
+          saveContent(markdown).then(() => alert('Saved!'));
+      });
+
+      document.getElementById('addSlideBtn').addEventListener('click', () => {
+          const slidesContainer = document.querySelector('.reveal .slides');
+          const newSection = document.createElement('section');
+          newSection.innerHTML = '<h2>New Slide</h2><p>Click to edit</p>';
+
+          // Append to slides
+          slidesContainer.appendChild(newSection);
+
+          // Sync Reveal
+          Reveal.sync();
+          Reveal.slide(Reveal.getTotalSlides() - 1);
+          makeSlidesEditable();
+      });
+
+      document.getElementById('deleteSlideBtn').addEventListener('click', () => {
+          const index = Reveal.getIndices().h;
+          const slides = document.querySelectorAll('.reveal .slides > section');
+
+          if (slides.length <= 1) {
+              alert("Cannot delete the last slide!");
+              return;
+          }
+
+          if (confirm("Delete this slide?")) {
+              const slideToRemove = slides[index];
+              slideToRemove.remove();
+              Reveal.sync();
+              Reveal.slide(Math.max(0, index - 1));
+          }
+      });
+
+      // AI Generate Logic
+      const generateBtn = document.getElementById('generateBtn');
+      const aiTopic = document.getElementById('aiTopic');
+
+      generateBtn.addEventListener('click', () => {
             const topic = aiTopic.value.trim();
             if (!topic) {
                 alert('Please enter a topic!');
@@ -85,8 +260,12 @@
             })
             .then(res => res.text())
             .then(markdown => {
-                textarea.value = markdown;
-                return saveContent(); // Auto-save after generation
+                // We have new markdown.
+                // We need to reload the Reveal instance or reload the page.
+                // Easiest is to save and reload page.
+                return saveContent(markdown).then(() => {
+                    location.reload();
+                });
             })
             .catch(err => {
                 alert('Generation failed');
@@ -98,30 +277,6 @@
             });
         });
 
-        // Export content
-        exportBtn.addEventListener('click', () => {
-            const blob = new Blob([textarea.value], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'presentation.md';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        // Simple tab handling in textarea
-        textarea.addEventListener('keydown', function(e) {
-            if (e.key == 'Tab') {
-                e.preventDefault();
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
-                this.value = this.value.substring(0, start) +
-                    "  " + this.value.substring(end);
-                this.selectionStart = this.selectionEnd = start + 2;
-            }
-        });
     </script>
-</body>
+  </body>
 </html>
